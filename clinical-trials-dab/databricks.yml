@@ -1,0 +1,34 @@
+bundle:
+  name: clinical_trials_biotech_pao
+
+variables:
+  student_name:
+    description: "Nombre de la estudiante (proyecto final)"
+    default: "Paola Vargas"
+  catalog:
+    description: "Catálogo de Unity Catalog según el target (dev/prod)"
+    default: "dab__dev"
+  schema:
+    description: "Esquema donde viven las tablas del pipeline"
+    default: "biotech_clinical_trials"
+  fact_source_table:
+    description: "Tabla del hecho principal (Marketplace, solo lectura)."
+    default: "john_snow_labs_biotech_pharma_and_research_information_database.biotech_pharma_and_research_information_database.required_clinical_trial_after_approval_database"
+  notification_email:
+    description: "Correo para notificaciones de éxito/fallo del job"
+    default: "pao02.vargas@gmail.com"
+
+include:
+  - resources/*.yml
+
+targets:
+  development:
+    default: true
+    variables:
+      catalog: "dab__dev"
+  production:
+    mode: production
+    variables:
+      catalog: "dab__prod"
+    workspace:
+      root_path: /Workspace/Users/pao02.vargas@gmail.com/.bundle/${bundle.name}/${bundle.target}

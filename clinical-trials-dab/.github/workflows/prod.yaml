@@ -1,0 +1,29 @@
+name: prod-clinical-trials-bundle
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+env:
+  DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+  DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+  DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+  DATABRICKS_AUTH_TYPE: oauth-m2m
+
+jobs:
+  prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - name: Validate bundle (PR)
+        if: github.event_name == 'pull_request'
+        run: databricks bundle validate -t production
+      - name: Deploy bundle (push)
+        if: github.event_name == 'push'
+        run: databricks bundle deploy -t production
+      - name: Run orchestration job (push)
+        if: github.event_name == 'push'
+        run: databricks bundle run clinical_trials_orchestration_job -t production

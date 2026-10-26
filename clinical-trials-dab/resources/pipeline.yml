@@ -1,0 +1,16 @@
+resources:
+  pipelines:
+    clinical_trials_pipeline:
+      name: "Clinical Trials SDP Pipeline (${bundle.target}) - Paola Vargas"
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      photon: true
+      configuration:
+        catalog: ${var.catalog}
+        schema: ${var.schema}
+        fact_source_table: ${var.fact_source_table}
+        student_name: ${var.student_name}
+      libraries:
+        - file:
+            path: ../src/transformations.py
