@@ -7,22 +7,29 @@ resources:
           - ${var.notification_email}
         on_failure:
           - ${var.notification_email}
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${var.schema}
+        - name: gold_table
+          default: ${var.catalog}.${var.schema}.trials_gold
       tasks:
-        # Tarea 1: Ejecutar el pipeline SDP (Bronze -> Silver -> Gold)
+        # Tarea 1: ejecutar el pipeline SDP (Bronze -> Silver -> Gold)
         - task_key: run_sdp_pipeline
           pipeline_task:
             pipeline_id: ${resources.pipelines.clinical_trials_pipeline.id}
 
-        # Tarea 2: Verifica el conteo de filas en Gold
+        # Verifica el conteo de filas en Gold y lo expone como task value
         - task_key: verify_gold_rows
           depends_on:
             - task_key: run_sdp_pipeline
           notebook_task:
             notebook_path: ../src/check_gold_rows.py
             base_parameters:
-              gold_table: "${var.catalog}.${var.schema}.trials_gold"
+              gold_table: "{{job.parameters.gold_table}}"
 
-        # Tarea 3: If/Else condicional (row_count > 0)
+        # Tarea 2: If/Else condicional (row_count > 0)
         - task_key: gold_has_rows
           depends_on:
             - task_key: verify_gold_rows
@@ -40,7 +47,7 @@ resources:
             notebook_path: ../src/job_gate.py
             base_parameters:
               status: "success"
-              gold_table: "${var.catalog}.${var.schema}.trials_gold"
+              gold_table: "{{job.parameters.gold_table}}"
 
         # Rama FALSE: falla el job de forma explícita
         - task_key: gold_empty_abort
@@ -51,4 +58,4 @@ resources:
             notebook_path: ../src/job_gate.py
             base_parameters:
               status: "empty"
-              gold_table: "${var.catalog}.${var.schema}.trials_gold"
+              gold_table: "{{job.parameters.gold_table}}"
