@@ -24,7 +24,6 @@ resources:
         - task_key: verify_gold_rows
           depends_on:
             - task_key: run_sdp_pipeline
-          environment_key: default
           spark_python_task:
             python_file: ../src/check_gold_rows.py
             parameters:
@@ -44,7 +43,6 @@ resources:
           depends_on:
             - task_key: gold_has_rows
               outcome: "true"
-          environment_key: default
           spark_python_task:
             python_file: ../src/job_gate.py
             parameters:
@@ -56,14 +54,8 @@ resources:
           depends_on:
             - task_key: gold_has_rows
               outcome: "false"
-          environment_key: default
           spark_python_task:
             python_file: ../src/job_gate.py
             parameters:
               - "empty"
               - "{{job.parameters.gold_table}}"
-
-      environments:
-        - environment_key: default
-          spec:
-            client: "1"
