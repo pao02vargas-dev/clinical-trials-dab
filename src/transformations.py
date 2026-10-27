@@ -109,6 +109,8 @@ def build_research_sponsors_scd2():
         stored_as_scd_type=2,
     )
 
+build_research_sponsors_scd2()
+
 # =====================================================================
 # GOLD — duración media y número de ensayos por fase (tipo de ensayo)
 # y nivel de certificación del patrocinador, con la versión VIGENTE SCD2.
