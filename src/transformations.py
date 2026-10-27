@@ -24,7 +24,7 @@ def t(name: str) -> str:
 )
 def trials_bronze():
     return (
-        spark.readStream.table(FACT_SOURCE)
+        spark.read.table(FACT_SOURCE)
         .withColumn("_ingested_at", F.current_timestamp())
     )
 
@@ -68,7 +68,7 @@ def research_sponsors_bronze():
     comment="Silver: ensayos clínicos tipados, normalizados y con columna derivada duration_days",
 )
 def trials_silver():
-    src = dlt.read_stream(t("trials_bronze"))
+    src = dlt.read(t("trials_bronze"))
     def to_date_safe(c):
         # Fechas string; tolera ISO (yyyy-MM-dd) y MM/dd/yyyy
         return F.coalesce(F.to_date(F.col(c)), F.to_date(F.col(c), "MM/dd/yyyy"))
@@ -90,15 +90,14 @@ def trials_silver():
 
 # Dimensión SCD Type 2 con AUTO CDC (equivalente SQL: "FLOW AUTO CDC ...
 # KEYS ... SEQUENCE BY ... STORED AS SCD TYPE 2").
-@dlt.expect_all_or_drop({
-    "valid_sponsor_key": "sponsor_id IS NOT NULL",
-    "valid_operation":    "operation_type IN ('INSERT', 'UPDATE', 'DELETE')",
-    "valid_event_ts":    "updated_at IS NOT NULL",
-})
 def build_research_sponsors_scd2():
     dlt.create_streaming_table(
         name=t("research_sponsors_scd2"),
         comment="Silver: dimensión Research Sponsors SCD Type 2 (historia completa)",
+        expect_all_or_drop={
+            "valid_sponsor_key": "sponsor_id IS NOT NULL",
+            "valid_event_ts":    "updated_at IS NOT NULL",
+        },
     )
     dlt.create_auto_cdc_flow(
         target=t("research_sponsors_scd2"),
