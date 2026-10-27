@@ -1,7 +1,14 @@
-# Ramas del If/Else del job de orquestación.
+# Databricks notebook source
+from databricks.sdk.runtime import dbutils
 import sys
 
-mode, gold_table = sys.argv[1], sys.argv[2]
+# Obtener parámetros desde base_parameters (Serverless) o sys.argv (respaldo)
+try:
+    mode = dbutils.widgets.get("status")
+    gold_table = dbutils.widgets.get("gold_table")
+except Exception:
+    mode = sys.argv[1] if len(sys.argv) > 1 else "success"
+    gold_table = sys.argv[2] if len(sys.argv) > 2 else ""
 
 if mode == "empty":
     raise RuntimeError(

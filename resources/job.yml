@@ -7,30 +7,22 @@ resources:
           - ${var.notification_email}
         on_failure:
           - ${var.notification_email}
-      parameters:
-        - name: catalog
-          default: ${var.catalog}
-        - name: schema
-          default: ${var.schema}
-        - name: gold_table
-          default: ${var.catalog}.${var.schema}.trials_gold
       tasks:
-        # Tarea 1: ejecutar el pipeline SDP (Bronze -> Silver -> Gold)
+        # Tarea 1: Ejecutar el pipeline SDP (Bronze -> Silver -> Gold)
         - task_key: run_sdp_pipeline
           pipeline_task:
             pipeline_id: ${resources.pipelines.clinical_trials_pipeline.id}
 
-        # Verifica el conteo de filas en Gold y lo expone como task value
+        # Tarea 2: Verifica el conteo de filas en Gold
         - task_key: verify_gold_rows
           depends_on:
             - task_key: run_sdp_pipeline
-          environment_key: default
-          spark_python_task:
-            python_file: ../src/check_gold_rows.py
-            parameters:
-              - "{{job.parameters.gold_table}}"
+          notebook_task:
+            notebook_path: ../src/check_gold_rows.py
+            base_parameters:
+              gold_table: "${var.catalog}.${var.schema}.trials_gold"
 
-        # Tarea 2: If/Else condicional (row_count > 0)
+        # Tarea 3: If/Else condicional (row_count > 0)
         - task_key: gold_has_rows
           depends_on:
             - task_key: verify_gold_rows
@@ -44,26 +36,19 @@ resources:
           depends_on:
             - task_key: gold_has_rows
               outcome: "true"
-          environment_key: default
-          spark_python_task:
-            python_file: ../src/job_gate.py
-            parameters:
-              - "success"
-              - "{{job.parameters.gold_table}}"
+          notebook_task:
+            notebook_path: ../src/job_gate.py
+            base_parameters:
+              status: "success"
+              gold_table: "${var.catalog}.${var.schema}.trials_gold"
 
         # Rama FALSE: falla el job de forma explícita
         - task_key: gold_empty_abort
           depends_on:
             - task_key: gold_has_rows
               outcome: "false"
-          environment_key: default
-          spark_python_task:
-            python_file: ../src/job_gate.py
-            parameters:
-              - "empty"
-              - "{{job.parameters.gold_table}}"
-
-      environments:
-        - environment_key: default
-          spec:
-            client: "1"
+          notebook_task:
+            notebook_path: ../src/job_gate.py
+            base_parameters:
+              status: "empty"
+              gold_table: "${var.catalog}.${var.schema}.trials_gold"

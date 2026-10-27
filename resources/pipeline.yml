@@ -5,7 +5,7 @@ resources:
       catalog: ${var.catalog}
       schema: ${var.schema}
       serverless: true
-      photon: true
+      # Eliminar la línea photon: true
       configuration:
         catalog: ${var.catalog}
         schema: ${var.schema}
