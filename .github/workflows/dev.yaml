@@ -24,6 +24,3 @@ jobs:
       - name: Deploy bundle (push)
         if: github.event_name == 'push'
         run: databricks bundle deploy -t development
-      - name: Run orchestration job (push)
-        if: github.event_name == 'push'
-        run: databricks bundle run clinical_trials_orchestration_job -t development
