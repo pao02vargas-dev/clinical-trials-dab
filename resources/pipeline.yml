@@ -2,6 +2,7 @@ resources:
   pipelines:
     clinical_trials_pipeline:
       name: "Clinical Trials SDP Pipeline (${bundle.target}) - Paola Vargas"
+      allow_duplicate_names: true
       catalog: ${var.catalog}
       schema: ${var.schema}
       serverless: true
