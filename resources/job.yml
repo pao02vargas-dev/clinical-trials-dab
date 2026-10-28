@@ -7,6 +7,10 @@ resources:
           - ${var.notification_email}
         on_failure:
           - ${var.notification_email}
+      trigger:
+        cron_schedule:
+          quartz_cron_expression: "0 0 8 * * ?"
+          timezone_id: "America/Costa_Rica"
       parameters:
         - name: catalog
           default: ${var.catalog}
