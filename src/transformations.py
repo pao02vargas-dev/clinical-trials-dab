@@ -53,15 +53,19 @@ def research_sponsors_bronze():
 # =====================================================================
 # SILVER — hecho tipado/normalizado + dimensión SCD Type 2
 # EXPECTATIONS (justificación):
-#  * expect_or_fail "valid_trial_id": clave crítica del ensayo; si llega
-#    nula el dato no es confiable y el pipeline se detiene (fail-fast).
+#  * expect_or_drop "valid_trial_id": ID debe ser numérico; el dataset John
+#    Snow Labs tiene filas desalineadas con texto en ID (ej. "discussions.").
+#    Se descartan las filas con ID no numérico y queda contabilizado.
 #  * expect (WARN) "positive_duration": duraciones <= 0 son anomalías
 #    que se reportan pero NO se descartan (aportan valor analítico).
+#  * expect_or_drop "valid_duration": filas sin fecha válida producen
+#    duration_days NULL; se descartan (no aportan al análisis temporal).
 #  * expect_or_drop "valid_sponsor": sin Applicant no se puede unir a la
 #    dimensión de certificación; se descarta y queda contabilizado.
 # =====================================================================
-@dlt.expect_or_fail("valid_trial_id", "trial_id IS NOT NULL")
+@dlt.expect_or_drop("valid_trial_id", "trial_id RLIKE '^[0-9]+$'")
 @dlt.expect("positive_duration", "duration_days > 0")
+@dlt.expect_or_drop("valid_duration", "duration_days IS NOT NULL")
 @dlt.expect_or_drop("valid_sponsor", "sponsor_name IS NOT NULL")
 @dlt.table(
     name=t("trials_silver"),
@@ -70,13 +74,17 @@ def research_sponsors_bronze():
 def trials_silver():
     src = dlt.read(t("trials_bronze"))
     def to_date_safe(c):
-        # Fechas string; tolera ISO (yyyy-MM-dd) y MM/dd/yyyy
-        return F.coalesce(F.to_date(F.col(c)), F.to_date(F.col(c), "MM/dd/yyyy"))
+        # try_to_date: devuelve NULL para fechas inválidas (dataset con filas desalineadas)
+        return F.coalesce(
+            F.expr(f"try_to_date(`{c}`)"),
+            F.expr(f"try_to_date(`{c}`, 'MM/dd/yyyy')"),
+        )
     return (
         src.select(
-            F.coalesce(F.trim(F.col("Number")), F.col("ID")).cast("string").alias("trial_id"),
+            F.col("ID").cast("string").alias("trial_id"),
             F.trim(F.col("Applicant")).alias("sponsor_name"),
-            F.upper(F.trim(F.col("Document_Type"))).alias("phase"),   # PMR / PMC
+            F.when(F.length(F.trim(F.col("Document_Type"))) == 1,
+                   F.upper(F.trim(F.col("Document_Type")))).alias("phase"),  # N/S/B/O/P/F/D/R
             F.upper(F.trim(F.col("Status"))).alias("status"),
             F.trim(F.col("Product")).alias("product"),
             F.trim(F.col("NDA_Number")).alias("nda_number"),
