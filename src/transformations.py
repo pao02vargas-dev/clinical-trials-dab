@@ -1,8 +1,28 @@
 # =====================================================================
 # transformations.py — SDP Medallion: Clinical Trials & Biotech Pharma
 # Paola Vargas — Databricks Free Edition (serverless)
-# Python (no SQL) porque IDENTIFIER() no es soportado dentro de STREAM()
-# ni en AUTO CDC; con spark.conf.get() + f-strings es 100% parametrizable.
+#
+# Pipeline Lakeflow Spark Declarativo en Python (no SQL) porque
+# IDENTIFIER() no es soportado dentro de STREAM() ni en AUTO CDC;
+# con spark.conf.get() + f-strings es 100% parametrizable.
+#
+# Arquitectura Medallion:
+#   BRONZE  → trials_bronze (batch del Marketplace)
+#          → research_sponsors_bronze (Auto Loader JSON CDC)
+#   SILVER  → trials_silver (tipado, normalizado, expectations DROP/WARN)
+#          → research_sponsors_scd2 (Auto CDC Flow, SCD Type 2)
+#   GOLD    → trials_gold (agregacion por fase x certificacion)
+#
+# Parametros (via spark.conf):
+#   catalog           → dab__dev | dab__prod
+#   schema            → biotech_clinical_trials
+#   fact_source_table → tabla del Marketplace (John Snow Labs)
+#
+# Expectations (4 reglas, 2 comportamientos):
+#   valid_trial_id    DROP   → ID debe ser numerico (dataset desalineado)
+#   positive_duration WARN  → duracion > 0 (reporta, no descarta)
+#   valid_duration    DROP   → duration_days NOT NULL (sin fecha = inutil)
+#   valid_sponsor     DROP   → sponsor_name NOT NULL (sin sponsor = sin JOIN)
 # =====================================================================
 import dlt
 from pyspark.sql import functions as F

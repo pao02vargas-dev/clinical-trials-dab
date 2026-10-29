@@ -1,5 +1,17 @@
--- Metric View sobre la capa Gold (ejecutar en SQL warehouse serverless).
+-- =====================================================================
+-- metric_view.sql — Metric View sobre la capa Gold
+--
+-- Crea una vista semantica con MEASURE() exponiendo 2 KPIs y 2 dimensiones
+-- que responden la pregunta de negocio:
+--   "¿Cuantos ensayos hay por fase y nivel de certificacion del patrocinador?"
+--
+-- Requisitos de la rubrica: 2 measures + 2 dimensions
+--   Dimensions: phase (N/S/B/O) + certification_level (FDA/EMA/GMP/Dual)
+--   Measures:   enrollment_count (SUM de ensayos) + duration_days (AVG duracion)
+--
+-- Ejecutar en SQL warehouse serverless.
 -- Para DEV, sustituye dab__prod por dab__dev.
+-- =====================================================================
 CREATE OR REPLACE VIEW dab__prod.biotech_clinical_trials.mv_clinical_trials_metrics
 WITH METRICS LANGUAGE YAML AS
 $$

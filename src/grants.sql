@@ -1,11 +1,16 @@
--- Permisos a nivel de SCHEMA (no tabla) para demostrar la jerarquia de Unity Catalog.
--- GRANT SELECT ON SCHEMA hereda a todas las tablas, views y metric views del schema,
--- incluyendo trials_gold, mv_clinical_trials_metrics y futuras tablas que se agreguen.
--- Nota: el principal va con backticks (los emails con caracteres especiales
--- fallan como string literal en este warehouse).
-
-GRANT USE SCHEMA ON SCHEMA dab__prod.biotech_clinical_trials
-  TO `juan.morice@ulatina.net`;
-
-GRANT SELECT ON SCHEMA dab__prod.biotech_clinical_trials
+-- =====================================================================
+-- grants.sql — Gobernanza de Unity Catalog (produccion)
+--
+-- Otorga permisos de solo lectura (SELECT) sobre la Metric View de
+-- produccion al usuario evaluador.
+--
+-- Principio: minimo privilegio.
+--   - Solo SELECT en produccion (no dev)
+--   - Solo sobre la Metric View (no todas las tablas)
+--   - El entorno de desarrollo (dab__dev) no recibe grants externos
+--
+-- Nota: el principal va con backticks porque los emails con caracteres
+-- especiales fallan como string literal en este warehouse.
+-- =====================================================================
+GRANT SELECT ON TABLE dab__prod.biotech_clinical_trials.mv_clinical_trials_metrics
   TO `juan.morice@ulatina.net`;
